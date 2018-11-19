@@ -1,0 +1,58 @@
+The project Q&A video was very helpful in understanding and getting started with the project. Here is how I addressed
+all of the rubric points:
+
+1. The code compiles correctly.
+
+The code compiles and runs fine. No changes made to the CMakeLists.txt file.
+
+
+2. The car is able to drive at least 4.32 miles without incident..
+
+The car drives at about 49.5 MPH most of the time. It drives slower to avoid collisions with any car immediately in
+front of it in the same lane. It gradually reduces and increases speed appropriately to avoid collisions while
+targeting a speed of 49.9 MPH (see lines 281 and 325 of main.cpp).
+
+
+3. The car drives according to the speed limit.
+
+On line 324 of main.cpp, I make sure that the car's velocity never exceeds 49.5 MPH.
+
+
+4. Max Acceleration and Jerk are not Exceeded.
+
+I gradually increase and decrease the car's velocity at 0.224 MPH per cycle so as to not exceed the max acceleration
+and avoid jerk. See lines 281 and 325 of main.cpp.
+
+
+5. Car does not have collisions.
+
+To avoid collisions, I check to make sure that the car immediately in front of me is not within 30m. If it is then I
+gradually reduce my velocity and attempt a lane change if possible. See lines 273 and 280 in main.cpp.
+
+
+6. The car stays in its lane, except for the time between changing lanes.
+
+The car only attempts to change lanes when the car immediately in front of it in the same lane is moving slower and
+is within 30m. See lines 280-321 of main.cpp.
+
+
+7. The car is able to change lanes
+
+The car changes lanes if the car immediately in front in the same lane is within 30m and there are no cars in the
+desired next lane with 30m. See lines 284-321 in main.cpp.
+
+
+8. There is a reflection on how to generate paths
+
+Here's a walkthrough of the code to generate paths (note: all line numbers refer to the file main.cpp):
+
+I first set a variable to keep track of and update the lane and another variable to set the velocity (see lines 205
+and 208). I then initialize the car's s-value to the previous path's end s-value and check for any potential collision
+with any car in front of me in the same lane within 30m (see lines 261-274). If the car in front is too close, I
+reduce the car's velocity and attempt a lane change if it's safe. Otherwise, I increase the velocity as long as it is
+below 49.5MPH so as to stay below the speed limit (see lines 280-323).
+
+I then create a list of widely spaced (x,y) waypoints, evenly spaced at 30m. I interpolate these waypoints with a
+spline and fill it in with more points that control velocity. This is done in Frenet coordinates. I also make sure to
+shift the car's reference angle to zero degrees (see lines 380-387). Further details about the path generation code are
+included as comments within the code on lines 328-431.
