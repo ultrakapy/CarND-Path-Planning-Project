@@ -255,13 +255,13 @@ int main() {
             }
 
             bool too_close = false;
+            int too_close_dist = 30;
 
             // find ref_v to use
             for (int i = 0; i < sensor_fusion.size(); i++) {
                 // car is in my lane
                 float d = sensor_fusion[i][6];
                 if (d < (LANE_WIDTH + LANE_WIDTH*lane) && d > (LANE_WIDTH*lane)) {
-                //if (d < (2+4*lane+2) && d > (2+4*lane-2)) {
                     double vx = sensor_fusion[i][3];
                     double vy = sensor_fusion[i][4];
                     double check_speed = sqrt(vx*vx+vy*vy);
@@ -270,14 +270,57 @@ int main() {
                     // if using previous points, can project s value out
                     check_car_s += ((double) prev_size*0.02*check_speed);
                     // check s values greater than mine and s gap
-                    if ((check_car_s > car_s) && ((check_car_s-car_s) < 30)) {
+                    if ((check_car_s > car_s) && ((check_car_s-car_s) < too_close_dist)) {
                         too_close = true;
                     }
                 }
             }
 
+            // slow down (and try to change lanes if possible) or accelerate depending on how close front car is
             if (too_close) {
                 ref_vel -= VEL_INC;
+
+                // try to change lanes
+                vector<int> lanes_to_try;
+                bool change_lanes = true;
+                //int potential_next_lane = lane;
+                if (lane == 1) {
+                    lanes_to_try.push_back(0);
+                    lanes_to_try.push_back(2);
+                } else if (lane == 0) {
+                    lanes_to_try.push_back(1);
+                } else if (lane == 2) {
+                    lanes_to_try.push_back(1);
+                }
+
+                for (int l = 0; l < lanes_to_try.size(); l++) {
+                    int potential_next_lane = lanes_to_try[l];
+                    // look at all nearby cars
+                    for (int i = 0; i < sensor_fusion.size(); i++) {
+                        float d = sensor_fusion[i][6];
+                        // check to see if a car is in my desired next lane
+                        if (d < (LANE_WIDTH + LANE_WIDTH * potential_next_lane) &&
+                            d > (LANE_WIDTH * potential_next_lane)) {
+                            double vx = sensor_fusion[i][3];
+                            double vy = sensor_fusion[i][4];
+                            double check_speed = sqrt(vx * vx + vy * vy);
+                            double check_car_s = sensor_fusion[i][5];
+
+                            // if using previous points, can project s value out
+                            check_car_s += ((double) prev_size * 0.02 * check_speed);
+                            // check s values within Xm of my car in desired lane
+                            if (fabs(check_car_s - car_s) < too_close_dist) {
+                                change_lanes = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    // change lanes
+                    if (change_lanes) {
+                        lane = potential_next_lane;
+                    }
+                }
             } else if (ref_vel < MAX_VEL) {
                 ref_vel += VEL_INC;
             }
